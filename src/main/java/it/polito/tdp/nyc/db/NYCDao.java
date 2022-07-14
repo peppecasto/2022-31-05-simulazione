@@ -12,7 +12,7 @@ import java.util.Map;
 
 import com.javadocmd.simplelatlng.LatLng;
 
-import it.polito.tdp.nyc.model.CityDistance;
+import it.polito.tdp.nyc.model.Adiacenza;
 import it.polito.tdp.nyc.model.City;
 import it.polito.tdp.nyc.model.Hotspot;
 import it.polito.tdp.nyc.model.Provider;
@@ -45,65 +45,71 @@ public class NYCDao {
 		return result;
 	}
 
-	public List<City> getAllCities(String provider) {
-		// TODO Auto-generated method stub
-final String sql = "SELECT DISTINCT City, AVG(Latitude) AS Lat, AVG(Longitude) AS Lng, COUNT(*) AS NUM " + "FROM nyc_wifi_hotspot_locations "
-		+ "WHERE Provider= ? " + "GROUP BY City " + "ORDER BY City";
-		
-		try {
-			Connection conn = DBConnect.getConnection();
-			PreparedStatement st = conn.prepareStatement(sql);
-			st.setString(1, provider);
-			ResultSet res = st.executeQuery();
-			//istanzio la lista e la riempio nel while
-			List<City> result= new ArrayList<City>();
+public List<Provider> getAllProviders(){
+	String sql = "SELECT DISTINCT Provider  FROM nyc_wifi_hotspot_locations";
+	List<Provider> result = new ArrayList<>();
+	try {
+		Connection conn = DBConnect.getConnection();
+		PreparedStatement st = conn.prepareStatement(sql);
+		ResultSet res = st.executeQuery();
 
-			while (res.next()) {
-				result.add(new City(res.getString("City"), 
-						new LatLng(res.getDouble("Lat"), res.getDouble("Lng")), res.getInt("NUM")));
-				}
-			conn.close();
-			//torno la lista
-			return result;
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return null;
+		while (res.next()) {
+			result.add(new Provider(res.getString("Provider")));
 		}
-	}
-	
-	
-
-
-	
 		
-	
-
-	public List<String> getAllProviders() {
-		// TODO Auto-generated method stub
-			final String sql = " select DISTINCT Provider "
-					+ "from nyc_wifi_hotspot_locations "
-					+ "order by Provider";
-			
-			
-			try {
-				Connection conn = DBConnect.getConnection();
-				PreparedStatement st = conn.prepareStatement(sql);
-				ResultSet res = st.executeQuery();
-				//istanzio la lista e la riempio dentro il while coi providers
-				List<String> result = new ArrayList<>();
-				while (res.next()) {
-					result.add(res.getString("Provider"));
-				}
-				conn.close(); 
-				//torno la lista di providers
-				return result;
-			} catch (SQLException e) {
-				e.printStackTrace();
-				throw new RuntimeException("SQL Error");
-			}
-			
-		
+		conn.close();
+	} catch (SQLException e) {
+		e.printStackTrace();
+		throw new RuntimeException("SQL Error");
 	}
+
+	return result;
+}
+
+public List<City> getAllCitiesWithThatProvider(Provider p){
+	String sql = "SELECT DISTINCT City " + "FROM nyc_wifi_hotspot_locations " + "WHERE Provider = ?";
+	List<City> result = new ArrayList<>();
+	try {
+		Connection conn = DBConnect.getConnection();
+		PreparedStatement st = conn.prepareStatement(sql);
+		st.setString(1, p.getName());
+		ResultSet res = st.executeQuery();
+
+		while (res.next()) {
+			result.add(new City(res.getString("City")));
+		}
+		
+		conn.close();
+	} catch (SQLException e) {
+		e.printStackTrace();
+		throw new RuntimeException("SQL Error");
+	}
+	return result;
+	
+}
+
+public List<City> getCitiesCoordinates(Provider p){
+	String sql = "SELECT DISTINCT City, AVG(Latitude), AVG(Longitude) " + "FROM nyc_wifi_hotspot_locations " + "WHERE Provider = ? " +  "GROUP BY City";
+	List<City> result = new ArrayList<>();
+	try {
+		Connection conn = DBConnect.getConnection();
+		PreparedStatement st = conn.prepareStatement(sql);
+		st.setString(1, p.getName());
+		ResultSet res = st.executeQuery();
+
+		while (res.next()) {
+			result.add(new City(res.getString("City"), res.getDouble("AVG(Latitude)"), res.getDouble("AVG(Longitude)")));
+		}
+		
+		conn.close();
+	} catch (SQLException e) {
+		e.printStackTrace();
+		throw new RuntimeException("SQL Error");
+	}
+	return result;
+	
+}
+
 
 	
 	
